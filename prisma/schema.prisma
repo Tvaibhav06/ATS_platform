@@ -1,0 +1,355 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String            @id @default(uuid())
+  email           String            @unique
+  passwordHash    String?
+  name            String?
+  role            String            @default("CANDIDATE") // CANDIDATE | RECRUITER | HIRING_MANAGER | INTERVIEWER | ADMIN
+  companyId       String?
+  avatarUrl       String?
+  emailVerifiedAt DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
+
+  company         Company?          @relation(fields: [companyId], references: [id])
+  sessions        UserSession[]
+  profile         CandidateProfile?
+  jobs            Job[]
+  applications    Application[]
+  interviews      Interview[]       @relation("Interviewer")
+  notifications   Notification[]
+  activities      ActivityLog[]
+  assessments     Assessment[]      @relation("AssessmentCreator")
+  attempts        AssessmentAttempt[]
+}
+
+model UserSession {
+  id               String    @id @default(uuid())
+  userId           String
+  refreshTokenHash String
+  deviceName       String?
+  deviceType       String?
+  userAgent        String?
+  ipAddress        String?
+  createdAt        DateTime  @default(now())
+  lastUsedAt       DateTime  @default(now())
+  expiresAt        DateTime
+  revokedAt        DateTime?
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Company {
+  id              String    @id @default(uuid())
+  logoUrl         String?
+  name            String
+  website         String?
+  industry        String?
+  companySize     String?
+  description     String?
+  socialLinks     String?   // Store as JSON string
+  officeLocations String?   // Store as JSON string
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  users           User[]
+  jobs            Job[]
+  settings        Settings[]
+}
+
+model Job {
+  id                 String    @id @default(uuid())
+  companyId          String
+  recruiterId        String
+  title              String
+  department         String?
+  location           String?
+  salaryMin          Int?
+  salaryMax          Int?
+  experienceRequired Int?
+  skillsRequired     String    // Store as JSON string array
+  skillsPreferred    String    // Store as JSON string array
+  employmentType     String    // FULL_TIME | PART_TIME | CONTRACT | INTERN
+  workMode           String    // REMOTE | HYBRID | ONSITE
+  deadline           DateTime?
+  description        String
+  status             String    @default("DRAFT") // DRAFT | OPEN | CLOSED
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  company            Company   @relation(fields: [companyId], references: [id])
+  recruiter          User      @relation(fields: [recruiterId], references: [id])
+  applications       Application[]
+  assessments        Assessment[]
+}
+
+model CandidateProfile {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  profilePictureUrl String?
+  phone             String?
+  location          String?
+  education         String?   // JSON array
+  experience        String?   // JSON array
+  skills            String?   // JSON array
+  certifications    String?   // JSON array
+  portfolioUrl      String?
+  githubUrl         String?
+  linkedinUrl       String?
+  coverLetterText   String?
+  profileCompletion Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumes           Resume[]
+}
+
+model Resume {
+  id                 String    @id @default(uuid())
+  candidateProfileId String
+  fileUrl            String
+  fileHash           String
+  fileName           String
+  fileSizeBytes      Int
+  fileType           String    // PDF | DOCX
+  status             String    @default("UPLOADED") // UPLOADED | PARSING | PARSED | FAILED
+  uploadedAt         DateTime  @default(now())
+
+  profile            CandidateProfile @relation(fields: [candidateProfileId], references: [id])
+  analysis           ResumeAnalysis?
+
+  @@unique([candidateProfileId, fileHash])
+}
+
+model ResumeAnalysis {
+  id                   String   @id @default(uuid())
+  resumeId             String   @unique
+  extractedName        String?
+  extractedEmail       String?
+  extractedPhone       String?
+  skills               String?  // JSON
+  education            String?  // JSON
+  experience           String?  // JSON
+  projects             String?  // JSON
+  certifications       String?  // JSON
+  languages            String?  // JSON
+  totalExperienceYears Float?
+  promptVersion        String?
+  rawModelResponse     String?  // JSON
+  createdAt            DateTime @default(now())
+
+  resume               Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+}
+
+model Application {
+  id          String    @id @default(uuid())
+  candidateId String
+  jobId       String
+  source      String    @default("DIRECT") // DIRECT | REFERRAL | JOB_BOARD | CAREERS_PAGE | OTHER
+  stage       String    @default("APPLIED") // APPLIED | RESUME_SCREENING | SHORTLISTED | TECHNICAL_INTERVIEW | HR_INTERVIEW | OFFER | HIRED | REJECTED
+  appliedAt   DateTime  @default(now())
+  hiredAt     DateTime?
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  job         Job       @relation(fields: [jobId], references: [id])
+  candidate   User      @relation(fields: [candidateId], references: [id])
+  matchAnalysis MatchAnalysis?
+  interviews    Interview[]
+  attempts      AssessmentAttempt[]
+  offerLetter   OfferLetter?
+
+  @@unique([candidateId, jobId])
+}
+
+model MatchAnalysis {
+  id                  String   @id @default(uuid())
+  applicationId       String   @unique
+  matchScore          Int      @default(0)
+  strengths           String?  // JSON
+  matchedSkills       String?  // JSON
+  missingSkills       String?  // JSON
+  weakAreas           String?  // JSON
+  experienceAlignment String?
+  recommendation      String?
+  status              String   @default("PENDING") // PENDING | COMPLETED | FAILED
+  promptVersion       String?
+  provider            String?
+  model               String?
+  createdAt           DateTime @default(now())
+
+  application         Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model Interview {
+  id            String    @id @default(uuid())
+  applicationId String
+  interviewerId String
+  type          String    // TECHNICAL | HR | OTHER
+  scheduledAt   DateTime
+  meetingLink   String?
+  status        String    @default("SCHEDULED") // SCHEDULED | COMPLETED | CANCELLED
+  createdAt     DateTime  @default(now())
+
+  application   Application @relation(fields: [applicationId], references: [id])
+  interviewer   User        @relation("Interviewer", fields: [interviewerId], references: [id])
+  feedbacks     Feedback[]
+}
+
+model Feedback {
+  id                   String   @id @default(uuid())
+  interviewId          String
+  interviewerId        String
+  technicalScore       Int?
+  communicationScore   Int?
+  problemSolvingScore  Int?
+  teamworkScore        Int?
+  leadershipScore      Int?
+  overallRating        Int?
+  comments             String?
+  submittedAt          DateTime @default(now())
+
+  interview            Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewId, interviewerId])
+}
+
+model Assessment {
+  id              String    @id @default(uuid())
+  jobId           String?
+  title           String
+  instructions    String?
+  type            String    // MIXED
+  durationMinutes Int
+  status          String    @default("DRAFT") // DRAFT | PUBLISHED | CLOSED
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  job             Job?      @relation(fields: [jobId], references: [id])
+  creator         User      @relation("AssessmentCreator", fields: [createdBy], references: [id])
+  questions       AssessmentQuestion[]
+  attempts        AssessmentAttempt[]
+}
+
+model AssessmentQuestion {
+  id           String   @id @default(uuid())
+  assessmentId String
+  type         String   // MCQ | CODING | SQL | DEBUGGING
+  prompt       String
+  difficulty   String?
+  points       Int
+  orderIndex   Int      @default(0)
+  metadata     String?  // JSON
+  createdAt    DateTime @default(now())
+
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  options      AssessmentOption[]
+}
+
+model AssessmentOption {
+  id         String   @id @default(uuid())
+  questionId String
+  text       String
+  isCorrect  Boolean  @default(false)
+
+  question   AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model AssessmentAttempt {
+  id             String    @id @default(uuid())
+  assessmentId   String
+  applicationId  String
+  candidateId    String
+  startedAt      DateTime  @default(now())
+  deadlineAt     DateTime
+  submittedAt    DateTime?
+  autoSubmitted  Boolean   @default(false)
+  tabSwitchCount Int       @default(0)
+  score          Float?
+  status         String    @default("IN_PROGRESS") // IN_PROGRESS | SUBMITTED | AUTO_SUBMITTED | EVALUATION_PENDING | EVALUATED
+
+  assessment     Assessment  @relation(fields: [assessmentId], references: [id])
+  application    Application @relation(fields: [applicationId], references: [id])
+  candidate      User        @relation(fields: [candidateId], references: [id])
+  answers        AssessmentAnswer[]
+}
+
+model AssessmentAnswer {
+  id              String   @id @default(uuid())
+  attemptId       String
+  questionId      String
+  answerText      String
+  language        String?
+  executionResult String?  // JSON
+  score           Float?
+  submittedAt     DateTime @default(now())
+
+  attempt         AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}
+
+model OfferLetter {
+  id            String    @id @default(uuid())
+  applicationId String    @unique
+  candidateName String
+  role          String
+  salary        Int
+  joiningDate   DateTime
+  location      String
+  benefits      String?
+  status        String    @default("DRAFT") // DRAFT | SENT | ACCEPTED | REJECTED
+  pdfUrl        String?
+  sentAt        DateTime?
+  respondedAt   DateTime?
+
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  actorId    String
+  actorRole  String
+  action     String
+  entityType String
+  entityId   String
+  metadata   String?  // JSON
+  createdAt  DateTime @default(now())
+
+  actor      User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+model Settings {
+  id        String   @id @default(uuid())
+  companyId String?
+  key       String
+  value     String   // JSON
+  
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  @@unique([companyId, key])
+}
