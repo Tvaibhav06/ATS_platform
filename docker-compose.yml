@@ -12,5 +12,18 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/ats
+      - NEXTAUTH_SECRET=changeme_in_prod
+      - NEXTAUTH_URL=http://localhost:3000
+    depends_on:
+      - postgres
+
 volumes:
   pgdata:

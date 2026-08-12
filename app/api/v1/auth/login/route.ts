@@ -27,8 +27,8 @@ export async function POST(req: Request) {
     }
 
     const payload = { userId: user.id, role: user.role, email: user.email }
-    const accessToken = generateAccessToken(payload)
-    const refreshToken = generateRefreshToken(payload)
+    const accessToken = await generateAccessToken(payload)
+    const refreshToken = await generateRefreshToken(payload)
 
     // Store session in DB
     const expiresAt = new Date()
