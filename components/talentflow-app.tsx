@@ -79,6 +79,9 @@ export function TalentFlowApp() {
     fetchData();
   }, [user, token]);
 
+  const filtered = useMemo(() => applicants.filter((applicant) =>
+    `${applicant.name} ${applicant.skills.join(" ")}`.toLowerCase().includes(query.toLowerCase())), [applicants, query]);
+
   if (isLoading || !user) return <div className="app-shell" style={{ placeItems: 'center', display: 'grid' }}>Loading workspace...</div>;
 
   const roleLabels: Record<string, string> = {
@@ -97,9 +100,6 @@ export function TalentFlowApp() {
     { label: "Assessments", icon: ClipboardCheck },
     { label: "Analytics", icon: Gauge },
   ];
-
-  const filtered = useMemo(() => applicants.filter((applicant) =>
-    `${applicant.name} ${applicant.skills.join(" ")}`.toLowerCase().includes(query.toLowerCase())), [applicants, query]);
 
   async function advanceApplicant(id: string, target: Stage) {
     if (!token) return;
