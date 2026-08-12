@@ -13,9 +13,6 @@
 [![Google AI](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](./LICENSE)
 
-*Streamline your hiring pipeline — from sourcing to signed offer letter.*
-
-[Live Demo](https://ats-platform-six.vercel.app) · [API Docs](./openapi.yaml) · [ERD](./ERD.md)
 
 </div>
 
@@ -465,7 +462,6 @@ SOFTWARE.
 ---
 
 <div align="center">
-
-Built with ❤️ for the Hackathon · **TalentFlow ATS** · [MIT License](./LICENSE)
+[MIT License](./LICENSE)
 
 </div>
