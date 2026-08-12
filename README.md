@@ -1,21 +1,5 @@
 # TalentFlow ATS
 
-<div align="center">
-
-![TalentFlow Banner](https://img.shields.io/badge/TalentFlow-AI%20Powered%20ATS-7c3aed?style=for-the-badge&logo=sparkles&logoColor=white)
-
-**An AI-Powered, Full-Stack Applicant Tracking System**
-
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ecf8e?style=flat-square&logo=supabase)](https://supabase.com/)
-[![Prisma](https://img.shields.io/badge/Prisma-7.9-2D3748?style=flat-square&logo=prisma)](https://www.prisma.io/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Google AI](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](./LICENSE)
-
-
-</div>
-
 ---
 
 ## 📋 Table of Contents
